@@ -161,65 +161,25 @@ export default function HomePage() {
               <div className="w-full bg-[#F6F9FF] rounded-none sm:rounded-t-4xl">
                 <div className="mx-auto max-w-[1100px] px-2 sm:px-8 pt-2 pb-4 sm:pt-4 sm:pb-8">
                   <div className="h-4 sm:h-[8vh]"></div>
-                  <h2
-                    className="text-2xl sm:text-4xl font-poppins text-center font-bold mb-2 sm:mb-4"
-                    style={{ color: "#1F2E47" }}
-                  >
-                    Browse All Skill Gigs
+                  <h2 className="text-5xl sm:text-7xl font-poppins font-bold mb-4 text-[#1F2E47] text-center leading-tight whitespace-pre-line">
+                    {`Browse all\nSkill Gigs!`}
                   </h2>
-                  <p
-                    className="text-center text-sm sm:text-lg font-poppins font-light"
-                    style={{ color: "#1F2E47" }}
-                  >
-                    Claim Your Free, Sharable Skill Tag.
-                  </p>
-                  <p
-                    className="text-center text-sm sm:text-lg font-poppins font-light"
-                    style={{ color: "#1F2E47" }}
-                  >
-                    Start In Seconds, Start Looking For Gigs At Your Own Pace.
-                  </p>
-                  <div className="p-2 sm:p-6 flex justify-center">
-                    <div
-                      className="relative flex justify-center items-center"
-                      style={{ minHeight: 220 }}
-                    >
-                      <div
-                        className="absolute w-[340px] h-[220px] sm:w-[480px] sm:h-[320px]"
-                        style={{
-                          left: "50%",
-                          top: "50%",
-                          transform: "translate(-50%, -50%)",
-                          zIndex: 0,
-                          pointerEvents: "none",
-                          background:
-                            "radial-gradient(ellipse at center, #ADFF0066 0%, #ADFF0011 80%)",
-                          filter: "blur(16px)",
-                        }}
+                  <div className="text-[#1F2E47] text-lg sm:text-2xl font-poppins font-light text-center mb-4 w-full">
+                    A dynamic group of innovators who ignite ideas and transform
+                    them into impactful work!
+                  </div>
+                  <div className="relative w-full flex justify-center items-center mt-8">
+                    <FloatingLogos />
+                    <div className="w-full max-w-2xl mx-auto z-20">
+                      <AnimatedList
+                        items={animatedItems}
+                        onItemSelect={(item: string, index: number) =>
+                          console.log(item, index)
+                        }
+                        showGradients={true}
+                        enableArrowNavigation={true}
+                        displayScrollbar={true}
                       />
-                      <button
-                        onClick={handleStackLeft}
-                        className="absolute left-0 z-20 bg-[#ADFF00] text-black rounded-full w-8 h-8 flex items-center justify-center shadow hover:scale-110 transition-transform"
-                      >
-                        &#8592;
-                      </button>
-                      <div className="relative z-10">
-                        <Stack
-                          ref={stackRef}
-                          randomRotation={false}
-                          sensitivity={180}
-                          sendToBackOnClick={false}
-                          cardDimensions={{ width: 340, height: 220 }}
-                          cardsData={images}
-                          responsive={true}
-                        />
-                      </div>
-                      <button
-                        onClick={handleStackRight}
-                        className="absolute right-0 z-20 bg-[#ADFF00] text-black rounded-full w-8 h-8 flex items-center justify-center shadow hover:scale-110 transition-transform"
-                      >
-                        &#8594;
-                      </button>
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-16 mt-8 sm:mt-16 w-full max-w-[1100px] mx-auto">
@@ -294,7 +254,7 @@ export default function HomePage() {
                   <div className="bg-[#ADFF0038] rounded-full p-1 sm:p-2">
                     <div
                       className="bg-[#ADFF00] rounded-full px-3 py-1 sm:px-6 sm:py-2 font-poppins font-semibold text-black flex items-center gap-2 shadow text-xs sm:text-base cursor-pointer"
-                      onClick={() => router.push('/companies/login')}
+                      onClick={() => router.push("/companies/login")}
                     >
                       Partner With Us
                       <FaArrowRight className="rotate-315" />
@@ -361,13 +321,25 @@ export default function HomePage() {
                 <div className="mx-auto max-w-[1100px] px-2 sm:px-8 pt-2 pb-4 sm:pt-4 sm:pb-8 flex flex-col items-center">
                   <div className="w-full flex flex-col sm:flex-row items-center sm:items-start justify-between gap-8 min-h-[320px] sm:min-h-[380px] pt-12 sm:pt-20 pb-2 sm:pb-4">
                     <div className="w-full sm:w-1/2 flex flex-col items-center sm:items-start justify-center pl-2 pr-2 sm:pl-24">
-                      <h2 className="text-5xl sm:text-7xl font-poppins font-bold mb-4 text-[#1F2E47] text-center sm:text-left leading-tight whitespace-pre-line">
-                        {`Browse all\nSkill Gigs!`}
+                      <h2
+                        className="text-2xl sm:text-4xl font-poppins text-center sm:text-left font-bold mb-2 sm:mb-4"
+                        style={{ color: "#1F2E47" }}
+                      >
+                        Browse All Skill Gigs
                       </h2>
-                      <div className="sm:hidden text-[#1F2E47] text-lg sm:text-2xl font-poppins font-light text-center mb-4 w-full">
-                        A dynamic group of innovators who ignite ideas and
-                        transform them into impactful work!
-                      </div>
+                      <p
+                        className="text-center sm:text-left text-sm sm:text-lg font-poppins font-light"
+                        style={{ color: "#1F2E47" }}
+                      >
+                        Claim Your Free, Sharable Skill Tag.
+                      </p>
+                      <p
+                        className="text-center sm:text-left text-sm sm:text-lg font-poppins font-light"
+                        style={{ color: "#1F2E47" }}
+                      >
+                        Start In Seconds, Start Looking For Gigs At Your Own
+                        Pace.
+                      </p>
                     </div>
                     <div className="hidden sm:flex flex-col items-start w-1/2 justify-center pr-2 sm:pr-8">
                       <div className="text-[#1F2E47] text-lg sm:text-2xl font-poppins font-light mb-4">
@@ -379,18 +351,47 @@ export default function HomePage() {
                       </button>
                     </div>
                   </div>
-                  <div className="relative w-full flex justify-center items-center mt-8">
-                    <FloatingLogos />
-                    <div className="w-full max-w-2xl mx-auto z-20">
-                      <AnimatedList
-                        items={animatedItems}
-                        onItemSelect={(item: string, index: number) =>
-                          console.log(item, index)
-                        }
-                        showGradients={true}
-                        enableArrowNavigation={true}
-                        displayScrollbar={true}
+                  <div className="p-2 sm:p-6 flex justify-center">
+                    <div
+                      className="relative flex justify-center items-center"
+                      style={{ minHeight: 220 }}
+                    >
+                      <div
+                        className="absolute w-[340px] h-[220px] sm:w-[480px] sm:h-[320px]"
+                        style={{
+                          left: "50%",
+                          top: "50%",
+                          transform: "translate(-50%, -50%)",
+                          zIndex: 0,
+                          pointerEvents: "none",
+                          background:
+                            "radial-gradient(ellipse at center, #ADFF0066 0%, #ADFF0011 80%)",
+                          filter: "blur(16px)",
+                        }}
                       />
+                      <button
+                        onClick={handleStackLeft}
+                        className="absolute left-0 z-20 bg-[#ADFF00] text-black rounded-full w-8 h-8 flex items-center justify-center shadow hover:scale-110 transition-transform"
+                      >
+                        &#8592;
+                      </button>
+                      <div className="relative z-10">
+                        <Stack
+                          ref={stackRef}
+                          randomRotation={false}
+                          sensitivity={180}
+                          sendToBackOnClick={false}
+                          cardDimensions={{ width: 340, height: 220 }}
+                          cardsData={images}
+                          responsive={true}
+                        />
+                      </div>
+                      <button
+                        onClick={handleStackRight}
+                        className="absolute right-0 z-20 bg-[#ADFF00] text-black rounded-full w-8 h-8 flex items-center justify-center shadow hover:scale-110 transition-transform"
+                      >
+                        &#8594;
+                      </button>
                     </div>
                   </div>
                   <div className="sm:hidden flex flex-col items-center mt-4">
