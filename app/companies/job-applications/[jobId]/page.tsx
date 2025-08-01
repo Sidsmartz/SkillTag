@@ -7,7 +7,7 @@ import { Check, X, Eye, FileText, Send, Clock, ArrowLeft } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
-type ApplicationStatus = "applied" | "shortlisted" | "accepted" | "rejected" | "submitted"
+type ApplicationStatus = "applied" | "pending" | "shortlisted" | "accepted" | "rejected" | "submitted"
 
 interface Student {
   _id: string
@@ -41,8 +41,8 @@ interface UserData {
 
 type UserDataWithDefault = UserData | { email: string; name?: undefined; profileImage?: undefined; }
 
-export default function CompaniesJobApplicationsPage({ params }: { params: Promise<{ jobId: string }> }) {
-  const [activeTab, setActiveTab] = useState<ApplicationStatus>("applied")
+export default function CompaniesJobApplicationsPage({ params }: { params: { jobId: string } }) {
+  const [activeTab, setActiveTab] = useState<ApplicationStatus>("pending")
   const [job, setJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
   const [userDataMap, setUserDataMap] = useState<Record<string, UserData | null>>({})
@@ -126,19 +126,38 @@ export default function CompaniesJobApplicationsPage({ params }: { params: Promi
     }
   }, [job, activeTab]);
 
-  // Map 'applied' tab to 'pending' status in the database
-  const getStatusForTab = (tab: ApplicationStatus) => {
+  // Debug: Log all status values
+  useEffect(() => {
+    if (job?.applicants) {
+      console.log('All applicants with statuses:', job.applicants.map(app => ({
+        id: app._id,
+        email: app.student?.email,
+        status: app.status,
+        studentStatus: app.student?.status,
+        appliedAt: app.appliedAt
+      })));
+      console.log('Active tab:', activeTab);
+    }
+  }, [job, activeTab]);
+
+  // Map UI status to database status
+  const getStatusForTab = (tab: ApplicationStatus): string => {
+    // Map 'applied' tab to 'pending' status in the database
     if (tab === 'applied') return 'pending';
     return tab;
   };
 
-  const filteredApplicants = job?.applicants?.filter(
-    (applicant) => applicant.student.status === getStatusForTab(activeTab)
-  ) || []
+  const filteredApplicants = job?.applicants?.filter(applicant => {
+    const statusToMatch = getStatusForTab(activeTab);
+    // Check status at the root level of the applicant object
+    const matches = applicant.status === statusToMatch;
+    console.log(`Applicant ${applicant._id} status: '${applicant.student?.status}', looking for: '${statusToMatch}', matches: ${matches}`);
+    return matches;
+  }) || [];
 
   const getTabCount = (status: ApplicationStatus) => {
     return job?.applicants?.filter(
-      (applicant) => applicant.student.status === getStatusForTab(status)
+      (applicant) => applicant.status === getStatusForTab(status)
     ).length || 0;
   }
 
@@ -179,7 +198,7 @@ export default function CompaniesJobApplicationsPage({ params }: { params: Promi
   }
 
   const tabs = [
-    { key: "applied" as const, label: "Applied" },
+    { key: "applied" as const, label: "Pending" },
     { key: "shortlisted" as const, label: "Shortlisted" },
     { key: "accepted" as const, label: "Accepted" },
     { key: "rejected" as const, label: "Rejected" },
