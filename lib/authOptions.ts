@@ -26,8 +26,30 @@ export const authOptions = {
   session: { strategy: "jwt" as SessionStrategy },
   callbacks: {
     async signIn({ user }: { user: any }) {
-      // Simple sign-in - just allow all Google OAuth users
-      return true;
+      try {
+        const client = await connectToDatabase();
+        const db = client.db(); // Use the default DB from the connection string
+        const studentsCollection = db.collection("students");
+
+        const existingStudent = await studentsCollection.findOne({ email: user.email });
+
+        if (!existingStudent) {
+          // Create a new student if they don't exist
+          await studentsCollection.insertOne({
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            onboardingComplete: false, // Default onboarding status
+            applications: [],
+          });
+        }
+        return true; // Allow sign-in
+      } catch (error) {
+        console.error("Error during sign-in:", error);
+        return false; // Prevent sign-in on error
+      }
     },
     async session({ session, token }: { session: any; token: any }) {
       if (token && session.user) {

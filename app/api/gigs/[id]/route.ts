@@ -20,15 +20,18 @@ interface Applicant {
 
 export async function GET(
   req: NextRequest,
-  context: { params: { jobId: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const client = await clientPromise
     const db = client.db()
 
     // Wait for params to be available and convert string ID to MongoDB ObjectId
-    const { jobId } = await Promise.resolve(context.params)
-    const objectId = new ObjectId(jobId)
+    const { id } = await Promise.resolve(context.params)
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid job id" }, { status: 400 })
+    }
+    const objectId = new ObjectId(id)
 
     // Find the job and populate with applicant details
     const job = await db.collection("jobs").findOne({ _id: objectId })
@@ -37,8 +40,8 @@ export async function GET(
       return NextResponse.json({ error: "Job not found" }, { status: 404 })
     }
 
-    // If applications array exists, map it to applicants array format
-    if (job.applications && !job.applicants) {
+    // Ensure applicants array exists based on stored applicants or legacy applications
+    if (!job.applicants && job.applications) {
       job.applicants = job.applications.map((app: Application) => ({
         email: app.applicantEmail,
         status: app.status,

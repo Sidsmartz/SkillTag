@@ -91,7 +91,7 @@ export default function AdditionalDetails() {
     });
     setIsUploading(false);
     if (res.ok) {
-      router.push("/");
+      router.push("/home");
     } else {
       setError("Failed to save details");
     }
@@ -230,9 +230,13 @@ export default function AdditionalDetails() {
             </Button>
 
             <div className="text-center">
-              <Link href="#" className="text-sm text-blue-600 hover:underline">
+              <button 
+                type="button" 
+                onClick={() => router.push('/home')}
+                className="text-sm text-blue-600 hover:underline"
+              >
                 Skip For Now
-              </Link>
+              </button>
             </div>
           </div>
         </form>

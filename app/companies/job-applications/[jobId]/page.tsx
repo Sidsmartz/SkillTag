@@ -32,16 +32,27 @@ interface UserData {
 
 type UserDataWithDefault = UserData | { email: string; name?: undefined; profileImage?: undefined; }
 
-export default function CompaniesJobApplicationsPage({ params }: { params: { jobId: string } }) {
+export default function CompaniesJobApplicationsPage({ params }: { params: Promise<{ jobId: string }> }) {
   const [activeTab, setActiveTab] = useState<ApplicationStatus>("applied")
   const [job, setJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
   const [userDataMap, setUserDataMap] = useState<Record<string, UserData | null>>({})
+  const [jobId, setJobId] = useState<string | null>(null)
 
   useEffect(() => {
+    async function initializeParams() {
+      const resolvedParams = await params
+      setJobId(resolvedParams.jobId)
+    }
+    initializeParams()
+  }, [params])
+
+  useEffect(() => {
+    if (!jobId) return
+    
     async function fetchJob() {
       try {
-        const res = await fetch(`/api/gigs/${params.jobId}`)
+        const res = await fetch(`/api/gigs/${jobId}`)
         if (!res.ok) throw new Error("Failed to fetch job")
         const data = await res.json()
         setJob(data)
@@ -77,7 +88,7 @@ export default function CompaniesJobApplicationsPage({ params }: { params: { job
       }
     }
     fetchJob()
-  }, [params.jobId])
+  }, [jobId])
 
   const filteredApplicants = job?.applicants?.filter(
     (applicant) => applicant.status === activeTab
@@ -106,7 +117,7 @@ export default function CompaniesJobApplicationsPage({ params }: { params: { job
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          jobId: params.jobId,
+          jobId: jobId,
           email,
           status: newStatus
         })
@@ -114,7 +125,7 @@ export default function CompaniesJobApplicationsPage({ params }: { params: { job
       if (!res.ok) throw new Error("Failed to update status")
       
       // Refresh job data
-      const jobRes = await fetch(`/api/gigs/${params.jobId}`)
+      const jobRes = await fetch(`/api/gigs/${jobId}`)
       if (!jobRes.ok) throw new Error("Failed to refresh job")
       const updatedJob = await jobRes.json()
       setJob(updatedJob)

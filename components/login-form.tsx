@@ -52,11 +52,11 @@ export default function LoginForm() {
       redirect: false,
       email,
       password,
-      callbackUrl: "/login/pin",
+      callbackUrl: "/login/details",
     });
     setLoading(false);
     if (res && res.ok) {
-      router.push(res.url || "/login/pin");
+      router.push(res.url || "/login/details");
     } else {
       setError("Invalid email or password");
     }
@@ -189,7 +189,7 @@ export default function LoginForm() {
                     variant="outline"
                     className="w-full py-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center space-x-2 bg-transparent"
                     onClick={() =>
-                      signIn("google", { callbackUrl: "/login/pin" })
+                      signIn("google", { callbackUrl: "/login/details" })
                     }
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">

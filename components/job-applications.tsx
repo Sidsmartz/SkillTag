@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Users, Clock, Zap, Check, X, Eye, Send, FileText } from "lucide-react"
@@ -10,26 +10,20 @@ import Image from "next/image"
 type ApplicationStatus = "applied" | "shortlisted" | "accepted" | "rejected" | "submitted"
 
 interface Applicant {
-  id: number
-  name: string
-  institution: string
-  avatar: string
-  status: ApplicationStatus
-  selected?: boolean
+  _id: string; // student id
+  name?: string;
+  email: string;
+  status: ApplicationStatus;
+  appliedAt: string;
+  avatar?: string;
+  institution?: string;
 }
 
 interface JobApplicationsProps {
   jobId: string
 }
 
-const mockApplicants: Applicant[] = [
-  {
-    id: 1,
-    name: "Akhil Samudrala",
-    institution: "NIT Raipur",
-    avatar: "/placeholder.svg?height=40&width=40",
-    status: "applied",
-  },
+/*
   {
     id: 2,
     name: "Akhil Samudrala",
@@ -114,12 +108,29 @@ const mockApplicants: Applicant[] = [
     avatar: "/placeholder.svg?height=40&width=40",
     status: "submitted",
   },
-]
+*/
 
 export default function JobApplications({ jobId }: JobApplicationsProps) {
   const [activeTab, setActiveTab] = useState<ApplicationStatus>("applied")
-  const [applicants, setApplicants] = useState<Applicant[]>(mockApplicants)
-  const [selectedApplicants, setSelectedApplicants] = useState<Set<number>>(new Set())
+  const [applicants, setApplicants] = useState<Applicant[]>([])
+  const [selectedApplicants, setSelectedApplicants] = useState<Set<string>>(new Set())
+
+  // fetch applicants
+  useEffect(() => {
+    async function fetchApplicants() {
+      try {
+        const res = await fetch(`/api/gigs/${jobId}`)
+        if (!res.ok) return
+        const data = await res.json()
+        if (data.applicants) {
+          setApplicants(data.applicants)
+        }
+      } catch (e) {
+        console.error("Failed to fetch applicants", e)
+      }
+    }
+    fetchApplicants()
+  }, [jobId])
 
   const filteredApplicants = applicants.filter((applicant) => applicant.status === activeTab)
 
@@ -127,7 +138,7 @@ export default function JobApplications({ jobId }: JobApplicationsProps) {
     return applicants.filter((applicant) => applicant.status === status).length
   }
 
-  const toggleApplicantSelection = (applicantId: number) => {
+  const toggleApplicantSelection = (applicantId: string) => {
     const newSelected = new Set(selectedApplicants)
     if (newSelected.has(applicantId)) {
       newSelected.delete(applicantId)
@@ -142,7 +153,7 @@ export default function JobApplications({ jobId }: JobApplicationsProps) {
     if (selectedApplicants.size === 0) return
     setApplicants((prev) =>
       prev.map((applicant) => {
-        if (selectedApplicants.has(applicant.id)) {
+        if (selectedApplicants.has(applicant._id)) {
           return { ...applicant, status: "shortlisted" as ApplicationStatus }
         }
         return applicant
@@ -155,7 +166,7 @@ export default function JobApplications({ jobId }: JobApplicationsProps) {
     if (selectedApplicants.size === 0) return
     setApplicants((prev) =>
       prev.map((applicant) => {
-        if (selectedApplicants.has(applicant.id)) {
+        if (selectedApplicants.has(applicant._id)) {
           return { ...applicant, status: "rejected" as ApplicationStatus }
         }
         return applicant
@@ -169,7 +180,7 @@ export default function JobApplications({ jobId }: JobApplicationsProps) {
     if (selectedApplicants.size === 0) return
     setApplicants((prev) =>
       prev.map((applicant) => {
-        if (selectedApplicants.has(applicant.id)) {
+        if (selectedApplicants.has(applicant._id)) {
           return { ...applicant, status: "accepted" as ApplicationStatus }
         }
         return applicant
@@ -183,7 +194,7 @@ export default function JobApplications({ jobId }: JobApplicationsProps) {
     if (selectedApplicants.size === 0) return
     setApplicants((prev) =>
       prev.map((applicant) => {
-        if (selectedApplicants.has(applicant.id)) {
+        if (selectedApplicants.has(applicant._id)) {
           return { ...applicant, status: "submitted" as ApplicationStatus }
         }
         return applicant
@@ -384,12 +395,12 @@ export default function JobApplications({ jobId }: JobApplicationsProps) {
               ) : (
                 filteredApplicants.map((applicant) => (
                   <div
-                    key={applicant.id}
+                    key={applicant._id}
                     className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                               <div className="flex items-center gap-3">
-                                <Link href={`/companies/profile/${applicant.id}`}>
+                                <Link href={`/companies/profile/${applicant._id}`}>
                                   <Image
                                     src={applicant.avatar || "/placeholder.svg"}
                                     alt={applicant.name}
@@ -398,7 +409,7 @@ export default function JobApplications({ jobId }: JobApplicationsProps) {
                                     className="rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                                   />
                                 </Link>
-                                <Link href={`/companies/profile/${applicant.id}`} className="text-sm font-medium text-gray-900 hover:underline">
+                                <Link href={`/companies/profile/${applicant._id}`} className="text-sm font-medium text-gray-900 hover:underline">
                                   {applicant.name}
                                 </Link>
                                 <p className="text-sm text-gray-500">{applicant.institution}</p>
@@ -417,14 +428,14 @@ export default function JobApplications({ jobId }: JobApplicationsProps) {
                         activeTab === "accepted" ||
                         activeTab === "submitted") && (
                         <button
-                          onClick={() => toggleApplicantSelection(applicant.id)}
+                          onClick={() => toggleApplicantSelection(applicant._id)}
                           className={`w-6 h-6 rounded-full border-2 transition-colors ${
-                            selectedApplicants.has(applicant.id)
+                            selectedApplicants.has(applicant._id)
                               ? "bg-[#5E17EB] border-[#5E17EB]"
                               : "border-gray-300 hover:border-gray-400"
                           }`}
                         >
-                          {selectedApplicants.has(applicant.id) && <Check className="w-3 h-3 text-white mx-auto" />}
+                          {selectedApplicants.has(applicant._id) && <Check className="w-3 h-3 text-white mx-auto" />}
                         </button>
                       )}
                     </div>

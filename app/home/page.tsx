@@ -16,19 +16,57 @@ import {
   Clock3,
   CheckCircle,
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import SidebarNav from "@/components/SidebarNav";
 import ClickSpark from "@/utils/ClickSpark/ClickSpark";
 
+import { useEffect, useState } from "react";
+
 export default function Component() {
-  const jobCard = {
-    company: "Myntra",
-    openings: "100 Openings",
-    timeAgo: "1d ago",
-    description:
-      "Create UGC Videos and get shares on Instagram about Myntra Showbizz now.",
-    payment: "₹ 350",
-    applicationDeadline: "2025-02-15", // Example deadline
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
+
+  const handleApply = async (jobId: string) => {
+    if (applyingJobId) return; // Prevent multiple clicks
+    
+    setApplyingJobId(jobId);
+    try {
+      const res = await fetch(`/api/gigs/${jobId}/apply`, { method: 'POST' });
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Update UI to show applied state
+        setJobs(jobs.map(job => 
+          job.id === jobId ? { ...job, hasApplied: true } : job
+        ));
+      } else {
+        alert(data.error || 'Failed to apply. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error applying to job:', error);
+      alert('Failed to apply. Please try again.');
+    } finally {
+      setApplyingJobId(null);
+    }
   };
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await fetch('/api/jobs');
+        if (res.ok) {
+          const data = await res.json();
+          setJobs(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
 
   // Helper function to check if deadline has passed
   const isDeadlinePassed = (deadline: string) => {
@@ -55,7 +93,7 @@ export default function Component() {
     }
   };
 
-  const JobCard = ({ job }: { job: typeof jobCard }) => {
+  const JobCard = ({ job }: { job: any }) => {
     const deadlinePassed = isDeadlinePassed(job.applicationDeadline);
     const deadlineText = formatDeadline(job.applicationDeadline);
     
@@ -65,37 +103,44 @@ export default function Component() {
     const timeDiff = deadlineDate.getTime() - currentDate.getTime();
     const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
     
+    // Parse company from gigTitle if missing
+    let companyName = job.company;
+    if (!companyName && job.gigTitle) {
+      // Extract first word or words before first space or dash
+      const match = job.gigTitle.match(/^([\w\-&]+)/);
+      companyName = match ? match[1] : 'Unknown Company';
+    }
+
     return (
     <Card className="bg-white rounded-2xl shadow-sm">
       <CardContent className="p-4">
         <div className="flex items-start gap-3 mb-3">
           <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
-            <span className="text-black font-bold text-lg">JS</span>
+            <span className="text-black font-bold text-lg">{companyName?.substring(0, 2) || 'CO'}</span>
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 mb-1">{job.company}</h3>
+            <h3 className="font-semibold text-gray-900 mb-1">{companyName || 'Unknown Company'}</h3>
             <div className="flex items-center gap-4 text-sm text-gray-500">
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4 text-purple-500" />
-                <span>{job.openings}</span>
+                <span>{job.numberOfPositions || 'N/A'} Openings</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
-                <span>{job.timeAgo}</span>
+                <span>{job.duration || 'N/A'}</span>
               </div>
             </div>
           </div>
         </div>
 
         <p className="text-gray-700 text-sm mb-4 leading-relaxed">
-          Create <span className="font-semibold">UGC Videos</span> and get
-          shares on Instagram about Myntra Showbizz now.
+          {job.description || 'No description provided'}
         </p>
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <span className="text-purple-600 text-lg">₹</span>
-            <span className="text-purple-600 font-semibold text-lg">350</span>
+            <span className="text-purple-600 font-semibold text-lg">{job.stipend || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-3">
             <ClickSpark
@@ -117,8 +162,15 @@ export default function Component() {
                 Deadline Passed
               </Button>
             ) : (
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full">
-                Apply
+              <Button 
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full"
+                disabled={applyingJobId === job.id || job.hasApplied}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleApply(job.id);
+                }}
+              >
+                {applyingJobId === job.id ? 'Applying...' : job.hasApplied ? 'Applied' : 'Apply'}
               </Button>
             )}
           </div>
@@ -145,90 +197,19 @@ export default function Component() {
   };
 
   return (
-    <>
-      {/* Mobile Layout - Below 700px */}
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 lg:hidden">
-        <div className="w-full max-w-sm bg-gradient-to-b from-purple-100 to-purple-200 rounded-3xl shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 pt-8">
-            <div>
-              <p className="text-gray-600 text-sm mb-1">Good morning, Luke!</p>
-              <p className="text-purple-600 text-xl font-semibold">
-                You Earned ₹0
-              </p>
-            </div>
-            <Avatar className="w-12 h-12 bg-gray-300">
-              <AvatarFallback className="bg-gray-300"></AvatarFallback>
-            </Avatar>
-          </div>
-
-          {/* Job Cards */}
-          <div className="px-4 space-y-4 pb-4">
-            {Array(3)
-              .fill(jobCard)
-              .map((job, index) => (
-                <JobCard key={index} job={job} />
-              ))}
-          </div>
-
-          {/* Bottom Navigation */}
-          <div className="bg-purple-600 px-4 py-4 mt-4 rounded-t-3xl">
-            <div className="flex items-center justify-around">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-purple-500 h-12 w-12"
-              >
-                <Home className="w-6 h-6 fill-current" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-purple-500 h-12 w-12"
-              >
-                <MessageCircle className="w-6 h-6" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-purple-500 h-12 w-12"
-              >
-                <Bell className="w-6 h-6" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-purple-500 h-12 w-12"
-              >
-                <Building2 className="w-6 h-6" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-purple-500 h-12 w-12"
-              >
-                <User className="w-6 h-6" />
-              </Button>
-            </div>
-          </div>
+    <div className="flex min-h-screen bg-black">
+      {/* Sidebar Navigation for students */}
+      <SidebarNav student={true} />
+      {/* Main Content */}
+      <main className="flex-1 p-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {loading ? (
+            <div className="text-center py-4 col-span-full">Loading jobs...</div>
+          ) : jobs.map((job) => (
+            <JobCard key={job.id} job={job} />
+          ))}
         </div>
-      </div>
-
-      {/* Desktop Layout - Above 700px */}
-      <div className="hidden lg:flex min-h-screen bg-black">
-        {/* Sidebar */}
-        <Navbar />
-        {/* Main Content */}
-        <div className="flex-1 p-8">
-          <div className="grid grid-cols-3 gap-6 max-w-6xl">
-            {Array(9)
-              .fill(jobCard)
-              .map((job, index) => (
-                <JobCard key={index} job={job} />
-              ))}
-          </div>
-        </div>
-      </div>
-    </>
+      </main>
+    </div>
   );
 }
