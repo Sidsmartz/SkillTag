@@ -88,15 +88,6 @@ export default function MyZigs() {
   return (
     <div className="h-screen bg-black text-white overflow-hidden p-6">
       <div className="flex justify-between items-center mb-4">
-        <Button
-          onClick={populateSampleData}
-          variant="outline"
-          size="sm"
-          className="text-[#5E17EB] border-[#5E17EB] hover:bg-[#5E17EB] hover:text-white"
-          disabled={isPopulating}
-        >
-          {isPopulating ? "Populating..." : "Populate Sample Data"}
-        </Button>
         <div className="h-[34px]"></div>
       </div>
       <div className="flex h-[calc(100vh-120px)] gap-6">
