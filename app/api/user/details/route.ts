@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
 
 export async function GET(req: NextRequest) {
   try {
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest) {
 
     // 2. If not found, try to find in gigs collection
     const gigWithApplicant = await db.collection("gigs").findOne({
-      "applicants.student.email": email
+      "applicants.student.email": email,
     });
 
     if (gigWithApplicant?.applicants) {
@@ -72,19 +74,15 @@ export async function GET(req: NextRequest) {
           _id: applicant.student._id,
           name: applicant.student.name,
           email: applicant.student.email,
-          ...(applicant.student.profileImage && { 
-            image: applicant.student.profileImage 
-          })
+          ...(applicant.student.profileImage && {
+            image: applicant.student.profileImage,
+          }),
         });
       }
     }
 
     // 3. If we get here, user was not found
-    return NextResponse.json(
-      { error: "User not found" },
-      { status: 404 }
-    );
-
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
   } catch (error) {
     console.error("Error in /api/user/details:", error);
     return NextResponse.json(

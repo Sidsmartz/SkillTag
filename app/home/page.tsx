@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -16,8 +16,9 @@ import {
   Clock3,
   CheckCircle,
 } from "lucide-react";
-import SidebarNav from "@/components/SidebarNav";
+import Navbar from "@/components/Navbar";
 import ClickSpark from "@/utils/ClickSpark/ClickSpark";
+import { useSession } from "next-auth/react";
 
 import { useEffect, useState } from "react";
 
@@ -25,6 +26,7 @@ export default function Component() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
+  const { data: session } = useSession();
 
   const handleApply = async (jobId: string) => {
     if (applyingJobId) return; // Prevent multiple clicks
@@ -197,19 +199,148 @@ export default function Component() {
   };
 
   return (
-    <div className="flex min-h-screen bg-black">
-      {/* Sidebar Navigation for students */}
-      <SidebarNav student={true} />
-      {/* Main Content */}
-      <main className="flex-1 p-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {loading ? (
-            <div className="text-center py-4 col-span-full">Loading jobs...</div>
-          ) : jobs.map((job) => (
-            <JobCard key={job.id} job={job} />
-          ))}
+    <>
+      {/* Mobile Layout - Below 700px */}
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 lg:hidden">
+        <div className="w-full max-w-sm bg-gradient-to-b from-purple-100 to-purple-200 rounded-3xl shadow-2xl overflow-hidden relative min-h-screen flex flex-col">
+          <Navbar />
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 pt-8">
+            <div>
+              <p className="text-gray-600 text-sm mb-1">Good morning, {session?.user?.name?.split(' ')[0] || 'User'}!</p>
+              <p className="text-purple-600 text-xl font-semibold">Find Your Next Gig</p>
+            </div>
+            <Avatar className="w-12 h-12 bg-gray-300">
+              <AvatarImage src={session?.user?.image || ''} />
+              <AvatarFallback className="bg-gray-300">{session?.user?.name?.substring(0, 2) || 'U'}</AvatarFallback>
+            </Avatar>
+          </div>
+
+          {/* Job Cards */}
+          <div className="px-4 space-y-4 pb-4 flex-1 flex flex-col overflow-y-auto">
+            {loading ? (
+              // Show loading state
+              <div className="flex-1">
+                {Array(3)
+                  .fill(null)
+                  .map((_, index) => (
+                    <Card
+                      key={index}
+                      className="bg-white rounded-2xl shadow-sm animate-pulse mb-4"
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                          <div className="flex-1">
+                            <div className="h-5 bg-gray-200 rounded w-1/2 mb-2"></div>
+                            <div className="flex items-center gap-4">
+                              <div className="h-4 bg-gray-200 rounded w-20"></div>
+                              <div className="h-4 bg-gray-200 rounded w-16"></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                        <div className="flex items-center justify-between">
+                          <div className="h-6 bg-gray-200 rounded w-16"></div>
+                          <div className="h-8 bg-gray-200 rounded w-24"></div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            ) : jobs.length > 0 ? (
+              // Show jobs
+              <div className="flex-1">
+                {jobs.map((job) => (
+                  <div key={job.id} className="mb-4">
+                    <JobCard job={job} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // Show empty state
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No jobs available at the moment</p>
+                  <Button
+                    className="mt-4 bg-purple-600 hover:bg-purple-700 text-white"
+                    onClick={() => window.location.reload()}
+                  >
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+
+      {/* Desktop Layout - Above 700px */}
+      <div className="hidden lg:flex min-h-screen bg-black">
+        <Navbar />
+
+        {/* Main Content */}
+        <div className="flex-1 p-8 flex flex-col lg:ml-64">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-white mb-2">Available Gigs</h1>
+            <p className="text-gray-400">Find your next opportunity</p>
+          </div>
+
+          {/* Job Cards Grid */}
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl">
+            {loading ? (
+              // Show loading state
+              Array(6)
+                .fill(null)
+                .map((_, index) => (
+                  <Card
+                    key={index}
+                    className="bg-white rounded-2xl shadow-sm animate-pulse"
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                        <div className="flex-1">
+                          <div className="h-5 bg-gray-200 rounded w-1/2 mb-2"></div>
+                          <div className="flex items-center gap-4">
+                            <div className="h-4 bg-gray-200 rounded w-20"></div>
+                            <div className="h-4 bg-gray-200 rounded w-16"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                      <div className="flex items-center justify-between">
+                        <div className="h-6 bg-gray-200 rounded w-16"></div>
+                        <div className="h-8 bg-gray-200 rounded w-24"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+            ) : jobs.length > 0 ? (
+              // Show jobs
+              jobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))
+            ) : (
+              // Show empty state
+              <div className="col-span-3 flex items-center justify-center min-h-[400px]">
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No jobs available at the moment</p>
+                  <Button
+                    className="mt-4 bg-purple-600 hover:bg-purple-700 text-white"
+                    onClick={() => window.location.reload()}
+                  >
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
