@@ -9,8 +9,17 @@ import Link from "next/link"
 
 type ApplicationStatus = "applied" | "shortlisted" | "accepted" | "rejected" | "submitted"
 
-interface Applicant {
+interface Student {
+  _id: string
+  name: string
   email: string
+  status: ApplicationStatus
+  appliedAt: string
+}
+
+interface Applicant {
+  _id: string
+  student: Student
   status: ApplicationStatus
   appliedAt: string
 }
@@ -59,7 +68,9 @@ export default function CompaniesJobApplicationsPage({ params }: { params: Promi
 
         // Fetch user data for all applicants
         if (data.applicants?.length > 0) {
-          const emails = data.applicants.map((a: Applicant) => a.email)
+          const emails = data.applicants
+            .filter((a: Applicant) => a.student?.email)
+            .map((a: Applicant) => a.student.email) as string[]
           const userDataPromises = emails.map(async (email: string) => {
             try {
               const userRes = await fetch(`/api/user/details?email=${encodeURIComponent(email)}`)
@@ -90,12 +101,45 @@ export default function CompaniesJobApplicationsPage({ params }: { params: Promi
     fetchJob()
   }, [jobId])
 
+  // Debug: Log job data and filtered applicants
+  useEffect(() => {
+    if (job?.applicants) {
+      console.log('Job data:', job);
+      console.log('All applicants with statuses:', job.applicants.map(app => ({
+        id: app._id,
+        email: app.student?.email,
+        status: app.status,
+        studentStatus: app.student?.status,
+        appliedAt: app.appliedAt
+      })));
+      console.log('Active tab:', activeTab);
+      
+      const filtered = job.applicants.filter(
+        (applicant) => applicant.status === activeTab
+      );
+      console.log('Filtered applicants:', filtered);
+      
+      // Log why applicants might be filtered out
+      job.applicants.forEach(applicant => {
+        console.log(`Applicant ${applicant._id} status: ${applicant.status}, matches active tab: ${applicant.status === activeTab}`);
+      });
+    }
+  }, [job, activeTab]);
+
+  // Map 'applied' tab to 'pending' status in the database
+  const getStatusForTab = (tab: ApplicationStatus) => {
+    if (tab === 'applied') return 'pending';
+    return tab;
+  };
+
   const filteredApplicants = job?.applicants?.filter(
-    (applicant) => applicant.status === activeTab
+    (applicant) => applicant.student.status === getStatusForTab(activeTab)
   ) || []
 
   const getTabCount = (status: ApplicationStatus) => {
-    return job?.applicants?.filter((applicant) => applicant.status === status).length || 0
+    return job?.applicants?.filter(
+      (applicant) => applicant.student.status === getStatusForTab(status)
+    ).length || 0;
   }
 
   const handleViewApplication = async (email: string) => {
@@ -200,9 +244,20 @@ export default function CompaniesJobApplicationsPage({ params }: { params: Promi
                 <div className="text-center py-8 text-gray-500">No applicants in this category yet.</div>
               ) : (
                 filteredApplicants.map((applicant, index) => {
-                  const userData = userDataMap[applicant.email]
-                  const displayName = userData?.name || applicant.email
-                  const profileImage = userData?.profileImage
+                  // Ensure we have a valid student object with safe defaults
+                  const student: Student = applicant.student || {
+                    _id: '',
+                    name: 'Unknown User',
+                    email: '',
+                    status: 'applied',
+                    appliedAt: new Date().toISOString()
+                  }
+                  
+                  const email = student.email || ''
+                  const userData = userDataMap[email] || { _id: '', email: '', name: '' } as UserData
+                  const displayName = userData.name || student.name || 'Unknown User'
+                  const profileImage = userData.profileImage || (userData as any).image
+                  const appliedDate = student.appliedAt ? new Date(student.appliedAt).toLocaleDateString() : 'N/A'
                   
                   return (
                     <div
@@ -220,13 +275,13 @@ export default function CompaniesJobApplicationsPage({ params }: { params: Promi
                           />
                         ) : (
                           <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                            {displayName[0].toUpperCase()}
+                            {displayName?.[0]?.toUpperCase() || '?'}
                           </div>
                         )}
                         <div>
                           <h4 className="font-medium text-gray-900">{displayName}</h4>
                           <p className="text-sm text-gray-500">
-                            Applied {new Date(applicant.appliedAt).toLocaleDateString()}
+                            Applied {new Date(applicant.student.appliedAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
@@ -234,21 +289,21 @@ export default function CompaniesJobApplicationsPage({ params }: { params: Promi
                         <Button
                           variant="outline"
                           className="text-sm px-4 py-1 border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"
-                          onClick={() => handleViewApplication(applicant.email)}
+                          onClick={() => handleViewApplication(email)}
                         >
                           View Profile
                         </Button>
                         {activeTab === "applied" && (
                           <>
                             <Button
-                              onClick={() => handleStatusUpdate(applicant.email, "rejected")}
+                              onClick={() => handleStatusUpdate(email, "rejected")}
                               variant="outline"
                               className="border-red-300 text-red-600 hover:bg-red-50 bg-transparent"
                             >
                               <X className="w-4 h-4" />
                             </Button>
                             <Button
-                              onClick={() => handleStatusUpdate(applicant.email, "shortlisted")}
+                              onClick={() => handleStatusUpdate(email, "shortlisted")}
                               className="bg-[#5E17EB] hover:bg-[#4A12C4] text-white"
                             >
                               <Check className="w-4 h-4" />
@@ -257,7 +312,7 @@ export default function CompaniesJobApplicationsPage({ params }: { params: Promi
                         )}
                         {activeTab === "shortlisted" && (
                           <Button
-                            onClick={() => handleStatusUpdate(applicant.email, "accepted")}
+                            onClick={() => handleStatusUpdate(email, "accepted")}
                             className="bg-green-600 hover:bg-green-700 text-white px-4"
                           >
                             Accept
@@ -265,7 +320,7 @@ export default function CompaniesJobApplicationsPage({ params }: { params: Promi
                         )}
                         {activeTab === "accepted" && (
                           <Button
-                            onClick={() => handleStatusUpdate(applicant.email, "submitted")}
+                            onClick={() => handleStatusUpdate(email, "submitted")}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4"
                           >
                             Send to Submit
