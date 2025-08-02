@@ -11,19 +11,27 @@ interface Applicant {
     name: string;
     email: string;
   };
-  status: string;
+  status: 'applied' | 'shortlisted' | 'selected' | 'completed';
   appliedAt: Date;
+  bookmarked: boolean;
+  boosted: boolean;
 }
 
 interface StudentApplication {
+  _id: ObjectId;
+  gig: {
     _id: ObjectId;
-    gig: {
-        _id: ObjectId;
-        title: string;
-        company?: string;
-    };
-    status: string;
-    appliedAt: Date;
+    title: string;
+    company?: string;
+    duration?: string;
+    stipend?: string;
+    location?: string;
+    deadline?: string;
+  };
+  status: 'applied' | 'shortlisted' | 'selected' | 'completed';
+  appliedAt: Date;
+  bookmarked: boolean;
+  boosted: boolean;
 }
 
 interface Student extends WithId<Document> {
@@ -37,24 +45,11 @@ interface Gig extends WithId<Document> {
   _id: ObjectId;
   gigTitle: string;
   company?: string;
+  duration?: string;
+  stipend?: string;
+  location?: string;
+  applicationDeadline?: string;
   applicants?: Applicant[];
-}
-
-interface Application extends WithId<Document> {
-  _id: ObjectId;
-  student: {
-    _id: ObjectId;
-    name: string;
-    email: string;
-  };
-  gig: {
-    _id: ObjectId;
-    title: string;
-    company?: string;
-  };
-  status: string;
-  appliedAt: Date;
-  updatedAt: Date;
 }
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
@@ -94,79 +89,71 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: 'Gig not found' }, { status: 404 });
     }
 
-    // Check if already applied
-    const existingApplication = await db.collection<Application>('applications').findOne({
-      'student._id': mutableStudent._id,
-      'gig._id': gig._id
-    });
+    // Check if already applied by looking in student's applications array
+    const hasAlreadyApplied = mutableStudent.applications?.some(
+      (app: any) => app.gig._id.toString() === gig._id.toString()
+    );
 
-    if (existingApplication) {
+    if (hasAlreadyApplied) {
       return NextResponse.json(
         { error: 'You have already applied to this gig' },
         { status: 400 }
       );
     }
 
-    // Create new application
-    const application = {
+    // Create application ID
+    const applicationId = new ObjectId();
+
+    // Create application object for student
+    const studentApplication: StudentApplication = {
+      _id: applicationId,
+      gig: {
+        _id: gig._id,
+        title: gig.gigTitle,
+        company: gig.company,
+        duration: gig.duration,
+        stipend: gig.stipend,
+        location: gig.location,
+        deadline: gig.applicationDeadline
+      },
+      status: 'applied',
+      appliedAt: new Date(),
+      bookmarked: false,
+      boosted: false
+    };
+
+    // Create applicant object for gig
+    const gigApplicant: Applicant = {
+      _id: applicationId,
       student: {
         _id: mutableStudent._id,
         name: mutableStudent.name,
         email: mutableStudent.email
       },
-      gig: {
-        _id: gig._id,
-        title: gig.gigTitle,
-        company: gig.company
-      },
-      status: 'pending',
+      status: 'applied',
       appliedAt: new Date(),
-      updatedAt: new Date()
+      bookmarked: false,
+      boosted: false
     };
-
-    // Insert the application
-    const result = await db.collection('applications').insertOne(application);
-    const applicationId = result.insertedId;
-
-    // Update gig's applicants array
-    await db.collection<Gig>('jobs').updateOne(
-      { _id: gig._id },
-      {
-        $push: {
-          applicants: {
-            _id: applicationId,
-            student: {
-              _id: student._id,
-              name: student.name,
-              email: student.email
-            },
-            status: 'pending',
-            appliedAt: new Date()
-          }
-        } as any
-      }
-    );
 
     // Update student's applications array
     await db.collection('students').updateOne(
       { _id: mutableStudent._id },
       {
-        $push: {
-          applications: {
-            _id: applicationId,
-            gig: {
-              _id: gig._id,
-              title: gig.gigTitle,
-              company: gig.company
-            },
-            status: 'pending',
-            appliedAt: new Date()
-          }
-        } as any
-      }
+        $push: { applications: studentApplication },
+        $set: { updatedAt: new Date() }
+      } as any
     );
 
-    return NextResponse.json({ success: true });
+    // Update gig's applicants array
+    await db.collection('jobs').updateOne(
+      { _id: gig._id },
+      {
+        $push: { applicants: gigApplicant }
+      } as any
+    );
+
+    return NextResponse.json({ success: true, message: 'Successfully applied to gig' });
   } catch (error) {
     console.error('Error applying to gig:', error);
     return NextResponse.json(

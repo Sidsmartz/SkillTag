@@ -1,5 +1,18 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface IApplicant {
+  _id: mongoose.Types.ObjectId;
+  student: {
+    _id: mongoose.Types.ObjectId;
+    name: string;
+    email: string;
+  };
+  status: 'applied' | 'shortlisted' | 'selected' | 'completed';
+  appliedAt: Date;
+  bookmarked: boolean;
+  boosted: boolean;
+}
+
 export interface IGig extends Document {
   gigTitle: string;
   category: string;
@@ -16,9 +29,24 @@ export interface IGig extends Document {
   skills: string[];
   datePosted: Date;
   status: string;
-  applications: mongoose.Types.ObjectId[]; // references Application
-  applicants: mongoose.Types.ObjectId[]; // references Student
+  applicants: IApplicant[];
 }
+
+const ApplicantSchema = new Schema({
+  student: {
+    _id: { type: Schema.Types.ObjectId, required: true },
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+  },
+  status: { 
+    type: String, 
+    enum: ['applied', 'shortlisted', 'selected', 'completed'],
+    default: 'applied'
+  },
+  appliedAt: { type: Date, default: Date.now },
+  bookmarked: { type: Boolean, default: false },
+  boosted: { type: Boolean, default: false },
+});
 
 const GigSchema: Schema = new Schema({
   gigTitle: { type: String, required: true },
@@ -36,8 +64,7 @@ const GigSchema: Schema = new Schema({
   skills: [{ type: String }],
   datePosted: { type: Date, default: Date.now },
   status: { type: String, default: 'active' },
-  applications: [{ type: Schema.Types.ObjectId, ref: 'Application' }],
-  applicants: [{ type: Schema.Types.ObjectId, ref: 'Student' }],
+  applicants: [ApplicantSchema],
 });
 
 export default mongoose.models.Gig || mongoose.model<IGig>('Gig', GigSchema);

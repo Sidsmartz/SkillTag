@@ -21,7 +21,14 @@ import { usePathname } from "next/navigation";
 
 type Application = {
   id: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'applied' | 'shortlisted' | 'selected' | 'completed';
+  status:
+    | "pending"
+    | "accepted"
+    | "rejected"
+    | "applied"
+    | "shortlisted"
+    | "selected"
+    | "completed";
   appliedAt: string;
   gig: {
     id: string;
@@ -43,7 +50,9 @@ type Application = {
 
 export default function MyZigs() {
   const [applications, setApplications] = useState<Application[]>([]);
-  const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
+  const [filteredApplications, setFilteredApplications] = useState<
+    Application[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("applied");
   const { toast } = useToast();
@@ -69,40 +78,56 @@ export default function MyZigs() {
     },
   ];
 
-  // Fetch applications from API
+  // Fetch applications from students collection
   useEffect(() => {
     const fetchApplications = async () => {
-      if (status !== "authenticated") return;
+      if (status !== "authenticated" || !session?.user?.email) return;
 
       try {
         setLoading(true);
-        // Try the original endpoint first, fallback to /api/applications if needed
-        let response = await fetch("/api/applications/mine");
+        // Fetch student data from students collection
+        const response = await fetch(`/api/students/me`);
         if (!response.ok) {
-          response = await fetch("/api/applications");
-        }
-        if (!response.ok) {
-          throw new Error("Failed to fetch applications");
+          throw new Error("Failed to fetch student data");
         }
         const data = await response.json();
-        const apps = data.applications || data.user?.applications || [];
-        
-        // Map old status values to new ones for compatibility
-        const mappedApps = apps.map((app: Application) => ({
+        const student = data.student;
+
+        if (!student) {
+          throw new Error("Student not found");
+        }
+
+        // Extract applications array from student document
+        const apps = student.applications || [];
+
+        // Map the applications to match the expected format
+        const mappedApps = apps.map((app: any) => ({
           ...app,
-          status: app.status === 'pending' ? 'applied' : 
-                  app.status === 'accepted' ? 'selected' : 
-                  app.status === 'rejected' ? 'applied' : app.status,
+          id: app._id || app.id,
+          status:
+            app.status === "pending"
+              ? "applied"
+              : app.status === "accepted"
+              ? "selected"
+              : app.status === "rejected"
+              ? "applied"
+              : app.status,
           gig: {
-            ...app.gig,
-            companyName: app.gig.companyName || app.gig.company || (app.gig.title ? app.gig.title.split(" ")[0] : "Unknown Company"),
-            payment: app.gig.payment || `₹${app.gig.stipend}`,
+            id: app.gig._id || app.gig.id,
+            title: app.gig.title,
+            company: app.gig.company || "Unknown Company",
+            companyName: app.gig.company || "Unknown Company",
+            duration: app.gig.duration || "Not specified",
+            stipend: app.gig.stipend || "Not specified",
+            payment: app.gig.payment || `₹${app.gig.stipend || "0"}`,
+            location: app.gig.location || "Not specified",
+            deadline: app.gig.deadline || "Not specified",
             description: app.gig.description || `${app.gig.title} role`,
-            openings: app.gig.openings || 1
-          }
+            openings: app.gig.openings || 1,
+          },
         }));
-        
-        console.log("Fetched applications:", mappedApps);
+
+        console.log("Fetched applications from student:", mappedApps);
         setApplications(mappedApps);
       } catch (error) {
         console.error("Error fetching applications:", error);
@@ -166,32 +191,25 @@ export default function MyZigs() {
 
     const handleBoost = async () => {
       if (isBoostLoading) return;
-      
+
       setIsBoostLoading(true);
       try {
-        const response = await fetch('/api/applications', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            gigId: application.gigId || application.gig.id,
-            action: 'boost',
-            value: !isBoosted,
-          }),
+        const response = await fetch(`/api/applications/${application.id}/boost`, {
+          method: "PATCH",
         });
 
         if (!response.ok) {
-          throw new Error('Failed to update boost status');
+          throw new Error("Failed to update boost status");
         }
 
-        setIsBoosted(!isBoosted);
+        const data = await response.json();
+        setIsBoosted(data.boosted);
         toast({
           title: "Success",
-          description: `Application ${!isBoosted ? 'boosted' : 'unboosted'} successfully!`,
+          description: data.message,
         });
       } catch (error) {
-        console.error('Error updating boost status:', error);
+        console.error("Error updating boost status:", error);
         toast({
           title: "Error",
           description: "Failed to update boost status. Please try again.",
@@ -203,7 +221,7 @@ export default function MyZigs() {
     };
 
     return (
-      <Card className="bg-white rounded-2xl shadow-sm">
+      <Card className="bg-white rounded-2xl shadow-sm max-h-[200px]">
         <CardContent className="p-4">
           <div className="flex items-start gap-3 mb-3">
             <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
@@ -238,7 +256,9 @@ export default function MyZigs() {
                 {gig.payment?.startsWith("$") ? "$" : "₹"}
               </span>
               <span className="text-purple-600 font-semibold text-lg">
-                {gig.payment?.replace(/[^0-9]/g, "") || gig.stipend?.replace(/[^0-9]/g, "") || "0"}
+                {gig.payment?.replace(/[^0-9]/g, "") ||
+                  gig.stipend?.replace(/[^0-9]/g, "") ||
+                  "0"}
               </span>
             </div>
             {application.status === "applied" ? (
@@ -251,7 +271,11 @@ export default function MyZigs() {
                 onClick={handleBoost}
                 disabled={isBoostLoading}
               >
-                {isBoostLoading ? "Loading..." : isBoosted ? "Boosted" : "Boost"}
+                {isBoostLoading
+                  ? "Loading..."
+                  : isBoosted
+                  ? "Boosted"
+                  : "Boost"}
               </Button>
             ) : (
               <Button
@@ -281,12 +305,16 @@ export default function MyZigs() {
           {/* Header */}
           <div className="flex items-center justify-between p-4 pt-8">
             <div>
-              <p className="text-gray-600 text-sm mb-1">Good morning, {session?.user?.name?.split(' ')[0] || 'User'}!</p>
+              <p className="text-gray-600 text-sm mb-1">
+                Good morning, {session?.user?.name?.split(" ")[0] || "User"}!
+              </p>
               <p className="text-purple-600 text-xl font-semibold">My Zigs</p>
             </div>
             <Avatar className="w-12 h-12 bg-gray-300">
-              <AvatarImage src={session?.user?.image || ''} />
-              <AvatarFallback className="bg-gray-300">{session?.user?.name?.substring(0, 2) || 'U'}</AvatarFallback>
+              <AvatarImage src={session?.user?.image || ""} />
+              <AvatarFallback className="bg-gray-300">
+                {session?.user?.name?.substring(0, 2) || "U"}
+              </AvatarFallback>
             </Avatar>
           </div>
 
@@ -348,7 +376,10 @@ export default function MyZigs() {
               // Show applications
               <div className="flex-1">
                 {filteredApplications.map((application, index) => (
-                  <div key={application._id || application.id || index} className="mb-4">
+                  <div
+                    key={application._id || application.id || index}
+                    className="mb-4"
+                  >
                     <JobCard application={application} />
                   </div>
                 ))}

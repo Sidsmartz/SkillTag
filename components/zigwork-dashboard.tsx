@@ -8,9 +8,9 @@ import Link from "next/link"
 
 export default function Component() {
   return (
-    <div className="h-screen bg-black text-white overflow-hidden p-6">
+    <div className="h-screen bg-black text-white overflow-hidden lg:ml-64">
       {/* Header with Post a Job button */}
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-4 p-6 pb-0">
         <Link href="/companies/post-gig">
           <Button className="bg-[#5E17EB] hover:bg-[#4A12C4] text-white px-6 py-1.5 rounded-lg text-sm">
             Post a Job
@@ -18,55 +18,7 @@ export default function Component() {
         </Link>
       </div>
 
-      <div className="flex h-[calc(100vh-120px)] gap-6">
-        {/* Left Sidebar */}
-        <div className="w-64 pl-8 pr-6 py-0 flex flex-col">
-          {/* Logo - Vertical Layout */}
-          <div className="flex flex-col items-center mb-12 mt-0">
-            <img src="/zigwork-logo.svg" alt="Zigwork Logo" width={64} height={64} className="w-16 h-16 mb-2" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/vite.svg'; }} />
-            <span className="text-xl font-bold">zigwork</span>
-          </div>
-
-          {/* Navigation */}
-          <nav className="space-y-2 mb-auto">
-            <Link
-              href="/companies"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#5E17EB]/20 text-[#5E17EB] border border-[#5E17EB]/30"
-            >
-              <Home className="w-4 h-4" />
-              <span className="font-medium text-sm">Home</span>
-            </Link>
-            <Link
-              href="/companies/my-zigs"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition-colors"
-            >
-              <BarChart3 className="w-4 h-4" />
-              <span className="font-medium text-sm">My Zigs</span>
-            </Link>
-            <Link
-              href="/companies/shortlist"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition-colors"
-            >
-              <Bookmark className="w-4 h-4" />
-              <span className="font-medium text-sm">Shortlist</span>
-            </Link>
-            <Link
-              href="/companies/profile"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition-colors"
-            >
-              <User className="w-4 h-4" />
-              <span className="font-medium text-sm">Profile</span>
-            </Link>
-          </nav>
-
-          {/* Footer Links */}
-          <div className="space-y-2 text-xs text-gray-400 px-3 mb-4">
-            <div className="hover:text-white cursor-pointer transition-colors">Support</div>
-            <div className="hover:text-white cursor-pointer transition-colors">Privacy Policy</div>
-            <div className="hover:text-white cursor-pointer transition-colors">Terms & Conditions</div>
-            <div className="text-xs mt-4 text-gray-500">©All Rights Reserved Zigwork</div>
-          </div>
-        </div>
+      <div className="flex h-[calc(100vh-120px)] gap-6 p-6 pt-4">
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">

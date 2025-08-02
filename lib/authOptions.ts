@@ -1,22 +1,29 @@
+import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { MongoClient } from "mongodb";
 import { SessionStrategy } from "next-auth";
+import mongoose from "mongoose";
+import Student from "../models/Student";
 
-const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB || "waitlist";
+// Connect to MongoDB using Mongoose
+const connectToDatabase = async () => {
+  if (mongoose.connections[0].readyState) {
+    return mongoose.connections[0];
+  }
+  
+  if (!process.env.MONGODB_URI) {
+    throw new Error("MONGODB_URI not set");
+  }
+  
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    return mongoose.connections[0];
+  } catch (error) {
+    console.error("MongoDB connection error:", error);
+    throw error;
+  }
+};
 
-let cachedClient: MongoClient | null = null;
-
-async function connectToDatabase() {
-  if (cachedClient) return cachedClient;
-  if (!uri) throw new Error("MONGODB_URI not set");
-  const client = new MongoClient(uri);
-  await client.connect();
-  cachedClient = client;
-  return client;
-}
-
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -27,23 +34,18 @@ export const authOptions = {
   callbacks: {
     async signIn({ user }: { user: any }) {
       try {
-        const client = await connectToDatabase();
-        const db = client.db(); // Use the default DB from the connection string
-        const studentsCollection = db.collection("students");
-
-        const existingStudent = await studentsCollection.findOne({ email: user.email });
+        await connectToDatabase();
+        const existingStudent = await (Student as any).findOne({ email: user.email });
 
         if (!existingStudent) {
           // Create a new student if they don't exist
-          await studentsCollection.insertOne({
+          const newStudent = new (Student as any)({
             name: user.name,
             email: user.email,
             image: user.image,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            onboardingComplete: false, // Default onboarding status
             applications: [],
           });
+          await newStudent.save();
         }
         return true; // Allow sign-in
       } catch (error) {

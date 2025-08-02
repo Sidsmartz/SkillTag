@@ -10,7 +10,7 @@ import CircularGallery from "../components/CircularGallery.jsx";
 import AnimatedList from "../components/AnimatedList.jsx";
 import TrustedBy from "../components/TrustedBy";
 import FloatingLogos from "../components/FloatingLogos.jsx";
-import TransitionLink from "@/components/TransitionLink";
+import Link from "next/link";
 
 const animatedItems = [
   "Graphic Designer",
@@ -92,13 +92,13 @@ export default function HomePage() {
                 </div>
                 <div className="flex flex-row items-center justify-center sm:justify-start mt-2 sm:mt-8 gap-x-4">
                   <div className="bg-[#ADFF0038] rounded-full p-1 sm:p-2">
-                    <TransitionLink
+                    <Link
                       className="bg-[#ADFF00] rounded-full px-3 py-1 sm:px-6 sm:py-2 font-poppins font-semibold text-black flex items-center gap-2 shadow text-xs sm:text-base cursor-pointer"
                       href="/login"
                     >
                       Join the waitlist
                       <FaArrowRight className="rotate-315" />
-                    </TransitionLink>
+                    </Link>
                   </div>
                   <button
                     className="rounded-full bg-[#1A2B0A] w-8 h-8 sm:w-14 sm:h-14 flex items-center justify-center border-2 border-[#4B8000] shadow-lg"
@@ -346,9 +346,12 @@ export default function HomePage() {
                         A dynamic group of innovators who ignite ideas and
                         transform them into impactful work!
                       </div>
-                      <button className="bg-[#ADFF00] text-[#1F2E47] font-bold font-poppins rounded-full px-6 py-2 shadow hover:scale-105 transition-transform flex items-center gap-2">
+                      <Link
+                        className="bg-[#ADFF00] text-[#1F2E47] font-bold font-poppins rounded-full px-6 py-2 shadow hover:scale-105 transition-transform flex items-center gap-2"
+                        href="/"
+                      >
                         View All Jobs <FaArrowRight className="rotate-315" />
-                      </button>
+                      </Link>
                     </div>
                   </div>
                   <div className="p-2 sm:p-6 flex justify-center">
@@ -395,9 +398,12 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="sm:hidden flex flex-col items-center mt-4">
-                    <button className="bg-[#ADFF00] text-[#1F2E47] font-bold font-poppins rounded-full px-6 py-2 shadow hover:scale-105 transition-transform flex items-center gap-2 mb-2">
+                    <Link
+                      className="bg-[#ADFF00] text-[#1F2E47] font-bold font-poppins rounded-full px-6 py-2 shadow hover:scale-105 transition-transform flex items-center gap-2 mb-2"
+                      href="/"
+                    >
                       View All Jobs <FaArrowRight className="rotate-315" />
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -431,13 +437,19 @@ export default function HomePage() {
                 </div>
                 <div className="flex flex-col gap-1 sm:gap-2 text-base sm:text-lg font-semibold">
                   <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 sm:gap-4">
-                    <span className="hover:text-[#ADFF00] transition-colors cursor-pointer">
+                    <Link
+                      className="hover:text-[#ADFF00] transition-colors cursor-pointer"
+                      href="/"
+                    >
                       Features
-                    </span>
+                    </Link>
                     <span className="text-[#E6EAF1]">/</span>
-                    <span className="hover:text-[#ADFF00] transition-colors cursor-pointer">
+                    <Link
+                      className="hover:text-[#ADFF00] transition-colors cursor-pointer"
+                      href="/"
+                    >
                       Product
-                    </span>
+                    </Link>
                   </div>
                 </div>
               </div>

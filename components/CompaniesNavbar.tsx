@@ -3,31 +3,31 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home,
-  FileText,
-  Clock3,
-  CheckCircle,
+  BarChart3,
+  Bookmark,
   User,
-  Bell,
   LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { signOut } from "next-auth/react";
 
 const navItems = [
-  { name: "Home", href: "/home", icon: Home },
-  { name: "My Zigs", href: "/my-zigs", icon: FileText },
-  { name: "Notifications", href: "/notifications", icon: Bell },
-  { name: "Profile", href: "/profile", icon: User },
+  { name: "Home", href: "/companies", icon: Home },
+  { name: "My Zigs", href: "/companies/my-zigs", icon: BarChart3 },
+  { name: "Shortlist", href: "/companies/shortlist", icon: Bookmark },
+  { name: "Profile", href: "/companies/profile", icon: User },
 ];
 
-export default function Navbar() {
+export default function CompaniesNavbar() {
   const pathname = usePathname();
   const showNavbar = [
-    "/home",
-    "/my-zigs",
-    "/notifications",
-    "/profile",
+    "/companies",
+    "/companies/my-zigs",
+    "/companies/shortlist",
+    "/companies/profile",
+    "/companies/post-gig",
   ].includes(pathname);
+  
   if (!showNavbar) return null;
 
   const handleLogout = async () => {
@@ -51,6 +51,7 @@ export default function Navbar() {
             zig<span className="font-normal">work</span>
           </span>
         </div>
+        
         {/* Navigation */}
         <nav className="flex-1 space-y-2 flex flex-col justify-center">
           {navItems.map(({ name, href, icon: Icon }) => (
@@ -71,6 +72,7 @@ export default function Navbar() {
             </Link>
           ))}
         </nav>
+        
         {/* Footer Links */}
         <div className="space-y-2 text-sm text-gray-500 mt-8">
           <div className="flex gap-4">
@@ -79,6 +81,7 @@ export default function Navbar() {
           </div>
           <button className="hover:text-gray-300">Terms & Conditions</button>
         </div>
+        
         {/* Logout Button */}
         <div className="mt-6">
           <Button

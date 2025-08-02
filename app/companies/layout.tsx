@@ -1,7 +1,7 @@
 'use client';
 
 import { SessionProvider } from 'next-auth/react';
-import Navbar from '@/components/Navbar';
+import CompaniesNavbar from '@/components/CompaniesNavbar';
 
 export default function CompaniesLayout({
   children,
@@ -11,7 +11,7 @@ export default function CompaniesLayout({
   return (
     <SessionProvider>
       <div className="flex min-h-screen bg-black">
-        <Navbar />
+        <CompaniesNavbar />
         <main className="flex-1">
           {children}
         </main>
